@@ -3,7 +3,6 @@ import sqlite3
 
 app = Flask(__name__)
 
-# Database initialization
 def init_db():
     conn = sqlite3.connect('tasks.db')
     c = conn.cursor()
@@ -39,9 +38,18 @@ def delete(task_id):
     conn.close()
     return redirect('/')
 
-# ❌ BUG: this route only toggles completion in memory, not in DB
+# ✅ FIXED ROUTE
 @app.route('/complete/<int:task_id>')
 def complete(task_id):
+    conn = sqlite3.connect('tasks.db')
+    c = conn.cursor()
+    # Toggle completion
+    c.execute('SELECT completed FROM tasks WHERE id = ?', (task_id,))
+    status = c.fetchone()[0]
+    new_status = 0 if status == 1 else 1
+    c.execute('UPDATE tasks SET completed = ? WHERE id = ?', (new_status, task_id))
+    conn.commit()
+    conn.close()
     return redirect('/')
 
 if __name__ == '__main__':
